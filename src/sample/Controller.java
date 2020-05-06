@@ -3,15 +3,16 @@ package sample;
 import javafx.beans.Observable;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.fxml.FXML;
-import javafx.scene.chart.CategoryAxis;
-import javafx.scene.chart.LineChart;
-import javafx.scene.chart.NumberAxis;
-import javafx.scene.chart.XYChart;
+import javafx.scene.chart.*;
 import javafx.scene.control.Slider;
 import javafx.scene.effect.ColorAdjust;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.PixelReader;
+import javafx.scene.media.AudioSpectrumListener;
+import javafx.scene.media.Media;
+import javafx.scene.media.MediaPlayer;
+import javafx.scene.media.MediaView;
 import javafx.stage.FileChooser;
 
 import java.awt.*;
@@ -19,12 +20,14 @@ import java.awt.image.BufferedImage;
 import java.awt.image.WritableRaster;
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 
 public class Controller {
     @FXML private ImageView originalImageView;
     @FXML private ImageView transformedImageView;
     @FXML private Slider brightnessSlider;
     @FXML private Slider contrastSlider;
+    @FXML private MediaView mediaView;
 
     private Image originalImage;
     private Image transformedImage;
@@ -37,6 +40,12 @@ public class Controller {
     private NumberAxis yAxis;
     @FXML
     private LineChart<String, Number> chartHistogram;
+
+    @FXML
+    private AreaChart<String, Number> spektrum;
+
+    XYChart.Series<String, Number> series1;
+    XYChart.Data[] series1Data;
 
     @FXML
     private CategoryAxis xAxisBrightness;
@@ -68,6 +77,30 @@ public class Controller {
 
             recalculateHistogram();
         }
+    }
+
+    @FXML
+    public void pickAudioFile() throws IOException {
+        FileChooser fileChooser = new FileChooser();
+        FileChooser.ExtensionFilter extFilter = new FileChooser.ExtensionFilter("Pliki mp3", "*.mp3");
+        fileChooser.getExtensionFilters().add(extFilter);
+        File file = fileChooser.showOpenDialog(null);
+        Media media = new Media(file.toURI().toString());
+        MediaPlayer mediaPlayer = new MediaPlayer(media);
+
+        int BANDS = mediaPlayer.getAudioSpectrumNumBands();
+        series1 = new XYChart.Series<>();
+        series1Data = new XYChart.Data[BANDS];
+
+        for (int i = 0; i < series1Data.length; i++) {
+            series1Data[i] = new XYChart.Data<>(Integer.toString(i + 1), 0);
+            series1.getData().add(series1Data[i]);
+        }
+        spektrum.getData().add(series1);
+
+
+        mediaPlayer.setAudioSpectrumListener(new MusicSpcetrumListener(mediaPlayer, BANDS, series1Data));
+        mediaPlayer.play();
     }
 
     @FXML
@@ -264,5 +297,42 @@ class ImageHistogram {
 
     public XYChart.Series getSeriesBrightness() {
         return seriesBrightness;
+    }
+}
+
+class MusicSpcetrumListener implements AudioSpectrumListener {
+    private final MediaPlayer mediaPlayer;
+    private final XYChart.Data[] series1Data;
+    float[] buffer;
+    int BANDS;
+
+    public MusicSpcetrumListener(MediaPlayer mediaPlayer, int bands, XYChart.Data[] series1Data) {
+        this.mediaPlayer = mediaPlayer;
+        this.BANDS = bands;
+        this.series1Data = series1Data;
+        buffer = createFilledBuffer(BANDS, mediaPlayer.getAudioSpectrumThreshold());
+    }
+
+    private float[] createFilledBuffer(int size, float fillValue) {
+        float[] floats = new float[size];
+        Arrays.fill(floats, fillValue);
+        return floats;
+    }
+
+    @Override
+    public void spectrumDataUpdate(double timestamp, double duration, float[] magnitudes, float[] phases) {
+        for (int i = 0; i < magnitudes.length; i++) {
+            if (magnitudes[i] >= buffer[i]) {
+                buffer[i] = magnitudes[i];
+                series1Data[i].setYValue(magnitudes[i] - mediaPlayer.getAudioSpectrumThreshold());
+            } else {
+                series1Data[i].setYValue(buffer[i] - mediaPlayer.getAudioSpectrumThreshold());
+                buffer[i] -= 0.25;
+            }
+        }
+
+//        for (int i = 0; i < series1Data.length; i++) {
+//            series1Data[i].setYValue(magnitudes[i] + 60);
+//        }
     }
 }

@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.chart.AreaChart?>
 <?import javafx.scene.chart.CategoryAxis?>
 <?import javafx.scene.chart.LineChart?>
 <?import javafx.scene.chart.NumberAxis?>
@@ -16,7 +18,7 @@
    <content>
       <GridPane alignment="center" hgap="10" prefHeight="566.0" prefWidth="1143.0" vgap="10">
       
-          <Button onAction="#showFileDialog" text="Wybierz przetwarzany plik" GridPane.columnIndex="2" GridPane.rowIndex="3" />
+          <Button onAction="#showFileDialog" text="Wybierz przetwarzany obraz" GridPane.columnIndex="2" GridPane.rowIndex="3" />
          <BorderPane style="-fx-border-color: black;" GridPane.columnIndex="2" GridPane.rowIndex="4">
             <center>
             
@@ -58,12 +60,28 @@
            </yAxis>
          </LineChart>
          <Button mnemonicParsing="false" onAction="#equalizeHistogram" text="Wyrównanie histogramu" GridPane.columnIndex="3" GridPane.rowIndex="3" />
+         <Button mnemonicParsing="false" onAction="#pickAudioFile" text="Wybierz przetwarzany dźwięk" GridPane.columnIndex="2" GridPane.rowIndex="3">
+            <GridPane.margin>
+               <Insets left="170.0" />
+            </GridPane.margin>
+         </Button>
+         <AreaChart fx:id="spektrum" createSymbols="false" prefHeight="178.0" prefWidth="799.0" GridPane.columnIndex="6" GridPane.columnSpan="2" GridPane.rowIndex="4" GridPane.rowSpan="2">
+           <xAxis>
+             <CategoryAxis side="BOTTOM" />
+           </xAxis>
+           <yAxis>
+             <NumberAxis side="LEFT" />
+           </yAxis>
+         </AreaChart>
          <columnConstraints>
             <ColumnConstraints />
             <ColumnConstraints />
             <ColumnConstraints />
             <ColumnConstraints />
             <ColumnConstraints />
+            <ColumnConstraints />
+            <ColumnConstraints />
+            <ColumnConstraints minWidth="500.0" prefWidth="500.0" />
          </columnConstraints>
          <rowConstraints>
             <RowConstraints />
